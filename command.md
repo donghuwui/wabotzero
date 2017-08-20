@@ -6,6 +6,7 @@
 ### manual
 - http://192.168.0.1/command/joint?d={l,r}&no={0..3}&angle={0..180}
 - http://192.168.0.1/command/wheel?d={f,b,l,r}&v=20
+- http://192.168.0.1/command/wheel?t={l,r}&v=20
 
 # ESP < -- > MEGA
 ## command set

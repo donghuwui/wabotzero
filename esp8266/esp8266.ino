@@ -8,6 +8,12 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial megaserial(14,12);//RX,TX
+
+
+
 
 const char *ssid = "arduino-er";
 const char *password = "password";
@@ -38,11 +44,20 @@ void handleJointCommand() {
   response();
 }
 
-void handleWheelCommand() {
+void handleWheelCommand() // Wheel 명령, /command/wheel
+{
   Serial.println(server.uri());
   Serial.println(server.method());
   Serial.println(server.args());
-
+  
+  char wheelcmd[5];
+  
+  wheelcmd[0] = 'M';
+  wheelcmd[1] = 'W';
+  wheelcmd[2] = 'D';
+  wheelcmd[3] = server.arg('d');
+  wheelcmd[4] = '\n';
+  megaSerial.write(wheelcmd);
   response();
 }
 
@@ -50,33 +65,31 @@ void handlePresetCommand() {
   Serial.println(server.uri());
   Serial.println(server.method());
   Serial.println(server.args());
+  
+  
 
   response();
 }
 
-void ledon(int pin)
-{
-  digitalWrite(12, LOW);
-  digitalWrite(13, LOW);
-  digitalWrite(14, LOW);
-  
-  digitalWrite(pin, HIGH);
+
 }
-void handleActCommand() {
+void handleActCommand() //preset 명령, /preset/act
+ {  
   Serial.println(server.uri());
   Serial.println(server.method());
-  Serial.println(server.arg("no"));
+  Serial.println(server.arg(no));
 
-  if (server.arg("no") == "0") {
-    Serial.println("action0");
-    ledon(12);
-  } else if (server.arg("no") == "1") {
-    Serial.println("action1");
-    ledon(13);
-  } else if (server.arg("no") == "2") {
-    Serial.println("action2");
-    ledon(14);
+	char actcmd[2];
+	
+    actcmd[0] = 'P';
+    actcmd[1] = atoi(sever.arg("no"));
+    actcmd[2] = '\n';
+	
+	  megaSerial.write(actcmd);
+	  
   }
+
+  
   response();
 }
 void handleNotFound() {
@@ -106,7 +119,7 @@ void response() {
 void setup() {
     delay(1000);
     Serial.begin(115200);
-    Serial.println();
+	megaserial.begin(9600);
 
     WiFi.softAP(ssid, password);
 
@@ -116,7 +129,7 @@ void setup() {
     if (MDNS.begin("esp8266.local")) {
       Serial.println ( "MDNS responder started" );
   }
-    server.on("/", handleRoot);
+    server.on("/", handleRoot); 
     server.on("/command", handleCommand);
     server.on("/command/joint", handleJointCommand);
     server.on("/command/wheel", handleWheelCommand);

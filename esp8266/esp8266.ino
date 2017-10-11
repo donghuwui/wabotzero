@@ -19,33 +19,18 @@ const byte rxPin = 14; // D5
 const byte txPin = 12; // D6
 SoftwareSerial toMega(rxPin, txPin);
 
-void handleRoot()
-{
-  Serial.println(server.uri());
-  Serial.println(server.method());
-  Serial.println(server.args());
 
-  response(200, -1);
-}
 
-void handleCommand()
-{
-  Serial.println(server.uri());
-  Serial.println(server.method());
-  Serial.println(server.args());
 
-  response(200, -1);
-}
 
 void handleJointCommand()
 {
   Serial.println(server.uri());
-  Serial.println(server.method());
-  Serial.println(server.args());
+
 
   // range: 30 ~ 150
   int errorCode = 200;
-  char cmd[6] = {'M', 'J', 0xff, 0xff, 0xff, '\0'};
+  int cmd[6] = {'M', 'J', 0xff, 0xff, 0xff, '\n'};
  
   // e.g.) http://192.168.4.1/command/joint?d=l&no=2&angle=110
   if (server.hasArg("d") &&
@@ -54,7 +39,8 @@ void handleJointCommand()
   {
     cmd[2] = toupper(server.arg("d")[0]);    // direction
     cmd[3] = (server.arg("no")[0]);
-    cmd[4] = toupper(server.arg("angle")[0]);
+    cmd[4] = atoi(server.arg("angle"));
+ 
     
   }
   else
@@ -64,10 +50,18 @@ void handleJointCommand()
   Serial.println(cmd);
 
   // send to mega
-  int res = toMega.print(cmd);
-  Serial.print(res, DEC);
+  toMega.print(cmd);
 
-  response(errorCode, res);
+}
+
+void handleJointOrigin()
+{
+  char cmd[4] = {'M', 'J', 0xff,'\n'};
+  if (server.hasArg("a"))
+  {
+    cmd[2] = toupper(server.arg("a")[0]);}
+    int res = toMega.print(cmd);
+  Serial.print(res, DEC);
 }
 
 void handleWheelCommand()
@@ -77,7 +71,7 @@ void handleWheelCommand()
   Serial.println(server.args());
 
   int errorCode = 200;
-  char cmd[5] = {'M', 'W', 'D', 'S', '\0'};
+  char cmd[5] = {'M', 'W', 'D', 'S', '\n'};
 
   // e.g.) http://192.168.4.1/command/wheel?d=f
   if (server.hasArg("d"))
@@ -111,7 +105,7 @@ void handlePresetCommand()
   
   // range: 30 ~ 150
   int errorCode = 200;
-  char cmd[3] = {'P', 0xff, '\0'};
+  char cmd[3] = {'P', 0xff, '\n'};
 
   // e.g.) http://192.168.4.1/preset/act?no=1
   if (server.hasArg("no")==0 ||server.hasArg("no")==1||server.hasArg("no")==2 )
@@ -175,10 +169,10 @@ void setup()
   {
     Serial.println("MDNS responder started");
   }
-  server.on("/", handleRoot);
-  server.on("/command", handleCommand);
+
   server.on("/command/joint", handleJointCommand);
   server.on("/command/wheel", handleWheelCommand);
+  server.on("/command/origin", handleJointOrigin);
   server.on("/preset/act", handlePresetCommand);
   server.onNotFound(handleNotFound);  
 
